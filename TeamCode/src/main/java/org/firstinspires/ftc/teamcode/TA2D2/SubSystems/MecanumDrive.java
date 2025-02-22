@@ -214,7 +214,7 @@ public class MecanumDrive {
             double zPower = zPid.calculate(rotatedPos.getAngle());
 
             // Set the motor powers to reach the target pose
-            setPower(new Pose2d(xPower, yPower, zPower));
+            setPower(new Pose2d(yPower, xPower, zPower));
         }
 
         // Stop the robot once the target pose is reached
