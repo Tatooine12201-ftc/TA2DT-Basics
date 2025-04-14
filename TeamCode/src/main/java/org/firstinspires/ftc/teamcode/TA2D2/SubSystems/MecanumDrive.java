@@ -130,11 +130,12 @@ public class MecanumDrive {
         y += deltaY;
 
         // Calculate the rotated position using the encoder values
-        rotatedPos = new Pose2d(
+        unRotatedPos = new Pose2d(
                x, y, angle
         );
 
         // Rotate the position based on the current angle of the robot
+        rotatedPos = unRotatedPos;
         rotatedPos.rotateByDegrees(angle);
 
         // Debug logging for position and angle
@@ -218,6 +219,9 @@ public class MecanumDrive {
      * @param timeOut The time limit for the PID control loop.
      */
     public void pidDrive(Pose2d pose, double timeOut) {
+
+        pose.unrotate(getAngle());
+
         // Set the timeout for each PID controller
         xPid.setTimeout(timeOut);
         yPid.setTimeout(timeOut);
@@ -240,12 +244,12 @@ public class MecanumDrive {
         while (!xPid.atSetPoint() || !yPid.atSetPoint() || !zPid.atSetPoint()) {
             update();
 //            // Calculate the motor powers based on the PID outputs
-            double xPower = xPid.calculate(rotatedPos.getX());
-            double yPower = yPid.calculate(rotatedPos.getY());
-            double zPower = zPid.calculate(rotatedPos.getAngle());
+            double xPower = xPid.calculate(unRotatedPos.getX());
+            double yPower = yPid.calculate(unRotatedPos.getY());
+            double zPower = zPid.calculate(unRotatedPos.getAngle());
 
             // Set the motor powers to reach the target pose
-            fieldDrive(new Pose2d(yPower, xPower, zPower));
+            setPower(new Pose2d(yPower, xPower, zPower));
         }
 
         // Stop the robot once the target pose is reached
