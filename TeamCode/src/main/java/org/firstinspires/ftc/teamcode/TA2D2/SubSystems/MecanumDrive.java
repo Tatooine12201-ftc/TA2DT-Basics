@@ -28,7 +28,13 @@ public class MecanumDrive {
     // Pose variables for the robot's position and orientation
     private Pose2d rotatedPos = new Pose2d(0, 0, 0);
     private Pose2d unRotatedPos = new Pose2d(0, 0, 0);
+
+    private double x = 0;
+    private double y = 0;
     private double angle = 0;
+
+    private double prevX = 0;
+    private double prevY = 0;
 
     // PID controllers for each axis
     private PIDFController xPid = new PIDFController(0, 0, 0, 0);
@@ -87,6 +93,8 @@ public class MecanumDrive {
         xPid.setTolerance(xTolerance);
         yPid.setTolerance(yTolerance);
         zPid.setTolerance(zTolerance);
+
+        resetEncoders();
     }
 
     /**
@@ -107,17 +115,23 @@ public class MecanumDrive {
      * Updates the robot's position using encoder values and IMU (yaw) angle.
      */
     public void update() {
+
+
         // Get the current yaw (heading) of the robot from the IMU
-        angle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        angle = getAngle();
 
         // Normalize the angle once to ensure it is within -180 to 180 degrees
         angle = MathUtil.normalizeAngle(angle);
 
+        double deltaX = getX() - prevX;
+        double deltaY = getY() - prevY;
+
+        x += deltaX;
+        y += deltaY;
+
         // Calculate the rotated position using the encoder values
-        rotatedPos = new Pose2d(xCMPerTick *
-                (leftXEncoder.getCurrentPosition() + rightXEncoder.getCurrentPosition()) / 2,
-                yCMPerTick * yEncoder.getCurrentPosition(),
-                angle
+        rotatedPos = new Pose2d(
+               x, y, angle
         );
 
         // Rotate the position based on the current angle of the robot
@@ -126,6 +140,28 @@ public class MecanumDrive {
         // Debug logging for position and angle
         DebugUtils.logDebug(opMode.telemetry, isDebugMode, SUBSYSTEM_NAME, "Rotated Position", rotatedPos);
         DebugUtils.logDebug(opMode.telemetry, isDebugMode, SUBSYSTEM_NAME, "Angle", angle);
+
+        prevX = getX();
+        prevY = getY();
+    }
+
+    public double getX(){
+        return xCMPerTick * ((rightXEncoder.getCurrentPosition() + leftXEncoder.getCurrentPosition())/2);
+    }
+
+    public double getY(){
+        return  yCMPerTick * (yEncoder.getCurrentPosition());
+    }
+
+    public double getAngle(){
+        return imu.getRobotYawPitchRollAngles().getYaw();
+    }
+
+    /**
+     * Stops the robot by setting all motor powers to zero.
+     */
+    public void stop() {
+        setPower(new Pose2d(0, 0, 0));
     }
 
     /**
@@ -160,12 +196,6 @@ public class MecanumDrive {
         DebugUtils.logDebug(opMode.telemetry, isDebugMode, SUBSYSTEM_NAME, "Right Back Power", rightBackPower);
     }
 
-    /**
-     * Stops the robot by setting all motor powers to zero.
-     */
-    public void stop() {
-        setPower(new Pose2d(0, 0, 0));
-    }
 
     /**
      * Drives the robot using field-relative control. The pose is rotated based on the robot's current heading.
@@ -173,7 +203,7 @@ public class MecanumDrive {
      */
     public void fieldDrive(Pose2d pose) {
         // Rotate the pose by the robot's current yaw angle
-        pose.rotateByDegrees(angle);
+        pose.rotateByDegrees(getAngle());
 
         // Set motor powers based on the rotated pose
         setPower(pose);
@@ -194,7 +224,7 @@ public class MecanumDrive {
         zPid.setTimeout(timeOut);
 
         // Rotate the target pose by the current angle of the robot and normalize it
-        pose.rotateByDegrees(angle);
+        pose.rotateByDegrees(getAngle());
 
         // Set the setpoints for the PID controllers
         xPid.setSetPoint(pose.getX());
@@ -208,20 +238,19 @@ public class MecanumDrive {
 
         // Run the PID control loop until the robot reaches the setpoints
         while (!xPid.atSetPoint() || !yPid.atSetPoint() || !zPid.atSetPoint()) {
-            // Calculate the motor powers based on the PID outputs
+            update();
+//            // Calculate the motor powers based on the PID outputs
             double xPower = xPid.calculate(rotatedPos.getX());
             double yPower = yPid.calculate(rotatedPos.getY());
             double zPower = zPid.calculate(rotatedPos.getAngle());
 
             // Set the motor powers to reach the target pose
-            setPower(new Pose2d(yPower, xPower, zPower));
+            fieldDrive(new Pose2d(yPower, xPower, zPower));
         }
 
         // Stop the robot once the target pose is reached
         stop();
     }
 
-    public double getAngle(){
-        return this.angle;
-    }
+
 }
