@@ -220,7 +220,7 @@ public class MecanumDrive {
      */
     public void pidDrive(Pose2d pose, double timeOut) {
 
-        pose.unrotate(getAngle());
+        pose.unrotateByDegrees(getAngle());
 
         // Set the timeout for each PID controller
         xPid.setTimeout(timeOut);
