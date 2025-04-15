@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.TA2D2.DriveEncoder;
 import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
+import org.firstinspires.ftc.teamcode.TA2D2.mathUtil.MathUtil;
 
 public class MecanumDriveNew {
 
@@ -122,7 +123,7 @@ public class MecanumDriveNew {
 
     // Get heading from IMU
     public double getAngle() {
-        return imu.getRobotYawPitchRollAngles().getYaw();
+        return MathUtil.normalizeAngleTo180(imu.getRobotYawPitchRollAngles().getYaw());
     }
 
     // Get X from perpendicular encoder
