@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.TA2D2.Encoders.DriveEncoder;
 import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
+import org.firstinspires.ftc.teamcode.TA2D2.Poses.Vector2d;
 import org.firstinspires.ftc.teamcode.TA2D2.mathUtil.MathUtil;
 
 public class MecanumDriveNew {
@@ -165,6 +166,14 @@ public class MecanumDriveNew {
         });
     }
 
+    public void setPower(Vector2d vec, double z) {
+        setPower(new Pose2d(vec, z));
+    }
+
+    public void setPower(double x, double y, double z) {
+        setPower(new Pose2d(x, y, z));
+    }
+
     // Stop all motors
     public void stop() {
         setPower(new Pose2d(0, 0, 0));
@@ -176,6 +185,14 @@ public class MecanumDriveNew {
         power.rotateByDegrees(getAngle());
         setPower(power);
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
+    }
+
+    public void fieldDrive(Vector2d vec, double z) {
+        fieldDrive(new Pose2d(vec, z));
+    }
+
+    public void fieldDrive(double x, double y, double z) {
+        fieldDrive(new Pose2d(x, y, z));
     }
 
     // Move to position with PID
@@ -216,5 +233,25 @@ public class MecanumDriveNew {
 
         stop();
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "PID Drive Complete");
+    }
+
+    public void pidDrive(Vector2d vec, double z, double timeOut) {
+        pidDrive(new Pose2d(vec, z), timeOut);
+    }
+
+    public void pidDrive(double x, double y, double z, double timeOut) {
+        pidDrive(new Pose2d(x, y, z), timeOut);
+    }
+
+    public void pidDrive(Pose2d pose) {
+        pidDrive(pose, 5);
+    }
+
+    public void pidDrive(Vector2d vec, double z) {
+        pidDrive(new Pose2d(vec, z), 5);
+    }
+
+    public void pidDrive(double x, double y, double z) {
+        pidDrive(new Pose2d(x, y, z), 5);
     }
 }
