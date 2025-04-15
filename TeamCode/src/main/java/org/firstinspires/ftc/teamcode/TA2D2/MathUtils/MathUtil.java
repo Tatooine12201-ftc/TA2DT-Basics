@@ -1,6 +1,4 @@
-package org.firstinspires.ftc.teamcode.TA2D2.mathUtil;
-
-import org.firstinspires.ftc.teamcode.TA2D2.Poses.Vector2d;
+package org.firstinspires.ftc.teamcode.TA2D2.MathUtils;
 
 public class MathUtil {
 

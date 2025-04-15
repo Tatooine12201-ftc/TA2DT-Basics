@@ -4,7 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.SubSystems.MecanumDrive;
-import org.firstinspires.ftc.teamcode.TA2D2.mathUtil.MathUtil;
+import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 
 /**
  * A class to follow paths using splines, with support for strafing, slant (diagonal) movement, and motion profiling.

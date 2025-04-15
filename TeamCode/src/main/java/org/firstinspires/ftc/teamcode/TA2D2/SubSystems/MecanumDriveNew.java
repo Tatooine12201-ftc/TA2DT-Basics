@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Vector2d;
-import org.firstinspires.ftc.teamcode.TA2D2.mathUtil.MathUtil;
+import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 
 public class MecanumDriveNew {
 
@@ -45,6 +45,10 @@ public class MecanumDriveNew {
     // Encoder constants
     private final double TICK_PER_REV = 0;
     private final double SPOOL_DIAMETER = 0;
+
+    private final double [] INTEGRAL_BOUNDS_X = {-0, +0};
+    private final double [] INTEGRAL_BOUNDS_Y = {-0, +0};
+    private final double [] INTEGRAL_BOUNDS_Z = {-0, +0};
 
     private static final String SUBSYSTEM_NAME = "Drive";
 
@@ -82,6 +86,10 @@ public class MecanumDriveNew {
         xPid.setTolerance(xTolerance);
         yPid.setTolerance(yTolerance);
         zPid.setTolerance(zTolerance);
+
+        xPid.setIntegrationBounds(INTEGRAL_BOUNDS_X[0], INTEGRAL_BOUNDS_X[1]);
+        yPid.setIntegrationBounds(INTEGRAL_BOUNDS_Y[0], INTEGRAL_BOUNDS_Y[1]);
+        zPid.setIntegrationBounds(INTEGRAL_BOUNDS_Z[0], INTEGRAL_BOUNDS_Z[1]);
 
         resetEncoders();
     }

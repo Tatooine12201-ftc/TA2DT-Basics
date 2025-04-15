@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode.TA2D2.Encoders;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
-import org.firstinspires.ftc.teamcode.TA2D2.mathUtil.MathUtil;
+import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 
 public class Encoder {
 
