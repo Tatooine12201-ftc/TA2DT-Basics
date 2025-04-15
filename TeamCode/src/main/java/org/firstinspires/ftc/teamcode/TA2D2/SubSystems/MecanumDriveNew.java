@@ -109,7 +109,7 @@ public class MecanumDriveNew {
         rotatedPos = unRotatedPos.copy();
         rotatedPos.rotateByDegrees(deltaAngle);
 
-        prevUnRotatedPos = unRotatedPos;
+        prevUnRotatedPos = unRotatedPos.copy();
 
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
                 {"deltaX", deltaX},
