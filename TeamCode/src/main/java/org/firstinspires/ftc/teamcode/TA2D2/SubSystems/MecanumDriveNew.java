@@ -106,7 +106,7 @@ public class MecanumDriveNew {
         unRotatedPos.setY(unRotatedPos.getY() + deltaY);
         unRotatedPos.setAngle(unRotatedPos.getAngle() + deltaAngle);
 
-        rotatedPos = unRotatedPos;
+        rotatedPos = new Pose2d(unRotatedPos.getX(), unRotatedPos.getY(), unRotatedPos.getAngle());
         rotatedPos.rotateByDegrees(deltaAngle);
 
         prevUnRotatedPos = unRotatedPos;
@@ -197,7 +197,7 @@ public class MecanumDriveNew {
 
             double xPower = xPid.calculate(unRotatedPos.getX(), pose.getX());
             double yPower = yPid.calculate(unRotatedPos.getY(), pose.getY());
-            double zPower = zPid.calculate(unRotatedPos.getAngle(), pose.getAngle());
+            double zPower = zPid.calculate(rotatedPos.getAngle(), pose.getAngle());
 
             setPower(new Pose2d(yPower, xPower, zPower));
 
