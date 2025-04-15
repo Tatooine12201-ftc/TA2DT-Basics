@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.TA2D2.SubSystems;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -10,6 +11,8 @@ import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
 import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.mathUtil.MathUtil;
+@Disabled
+@Deprecated
 
 public class MecanumDrive {
     // Motors for the Mecanum drive system

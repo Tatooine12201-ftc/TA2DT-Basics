@@ -102,10 +102,7 @@ public class Pose2d {
         // Rotate the position (Vector2d) by the specified angle
         position = position.rotateBy(rotationAngle);
 
-        // Update the angle of the pose
-        this.angle += rotationAngle;
-        // Normalize the angle to keep it within the range [0, 2π)
-        this.angle = normalizeAngle(this.angle);
+
     }
 
     /**
@@ -117,10 +114,6 @@ public class Pose2d {
         // Unrotate the position (Vector2d) by the inverse of the specified angle
         position = position.unRotateBy(unrotationAngle);
 
-        // Update the angle of the pose
-        this.angle -= unrotationAngle;
-        // Normalize the angle to keep it within the range [0, 2π)
-        this.angle = normalizeAngle(this.angle);
     }
 
     /**
@@ -132,11 +125,6 @@ public class Pose2d {
     public void rotateByDegrees(double rotationDegrees) {
         // Rotate the position using Vector2d's rotateByDegrees method
         position = position.rotateByDegrees(rotationDegrees);
-
-        // Update the angle of the pose
-        this.angle += Math.toRadians(rotationDegrees);
-        // Normalize the angle to keep it within the range [0, 2π)
-        this.angle = normalizeAngle(this.angle);
     }
 
     /**
@@ -148,11 +136,6 @@ public class Pose2d {
     public void unrotateByDegrees(double unrotationDegrees) {
         // Unrotate the position using Vector2d's unRotateByDegrees method
         position = position.unRotateByDegrees(unrotationDegrees);
-
-        // Update the angle of the pose
-        this.angle -= Math.toRadians(unrotationDegrees);
-        // Normalize the angle to keep it within the range [0, 2π)
-        this.angle = normalizeAngle(this.angle);
     }
 
     /**
