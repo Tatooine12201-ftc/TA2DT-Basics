@@ -39,6 +39,10 @@ public class Pose2d {
         this(pose.position, pose.getAngle());  // Reuse the main constructor
     }
 
+    public Pose2d copy() {
+        return new Pose2d(new Vector2d(position.getX(), position.getY()), angle);
+    }
+
     /**
      * Gets the x-coordinate of the pose.
      *

@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
-import org.firstinspires.ftc.teamcode.TA2D2.DriveEncoder;
+import org.firstinspires.ftc.teamcode.TA2D2.Encoders.DriveEncoder;
 import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
@@ -106,7 +106,7 @@ public class MecanumDriveNew {
         unRotatedPos.setY(unRotatedPos.getY() + deltaY);
         unRotatedPos.setAngle(unRotatedPos.getAngle() + deltaAngle);
 
-        rotatedPos = new Pose2d(unRotatedPos.getX(), unRotatedPos.getY(), unRotatedPos.getAngle());
+        rotatedPos = unRotatedPos.copy();
         rotatedPos.rotateByDegrees(deltaAngle);
 
         prevUnRotatedPos = unRotatedPos;
