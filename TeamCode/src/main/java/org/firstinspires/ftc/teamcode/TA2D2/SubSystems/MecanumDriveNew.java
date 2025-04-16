@@ -205,7 +205,7 @@ public class MecanumDriveNew {
 
     // Move to position with PID
     public void pidDrive(Pose2d pose, double timeOut) {
-        pose.unrotateByDegrees(getAngle());
+        pose.unrotateByDegrees(getAngle() - pose.getAngle());
 
         xPid.setTimeout(timeOut);
         yPid.setTimeout(timeOut);

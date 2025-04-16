@@ -1,9 +1,0 @@
-package org.firstinspires.ftc.teamcode.TA2D2.unit;
-
-public enum unit {
-    INCHES,
-    CM,
-    MM,
-    FEET,
-    METERS
-}

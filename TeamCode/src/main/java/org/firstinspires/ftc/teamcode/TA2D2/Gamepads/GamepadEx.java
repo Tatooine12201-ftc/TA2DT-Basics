@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.TA2D2.gamepads;
+package org.firstinspires.ftc.teamcode.TA2D2.Gamepads;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
