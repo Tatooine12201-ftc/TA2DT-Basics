@@ -9,7 +9,6 @@ import org.firstinspires.ftc.teamcode.TA2D2.Encoders.DriveEncoder;
 import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
-import org.firstinspires.ftc.teamcode.TA2D2.Poses.Vector2d;
 import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 
 public class MecanumDriveNew {
@@ -36,14 +35,15 @@ public class MecanumDriveNew {
     private Pose2d rotatedPos = new Pose2d(0, 0, 0);
     private Pose2d unRotatedPos = new Pose2d(0, 0, 0);
     private Pose2d prevUnRotatedPos = new Pose2d(0, 0, 0);
+    private Pose2d startPos = new Pose2d(0, 0, 0);
 
     // Tolerances
-    private final double xTolerance = 0;
-    private final double yTolerance = 0;
-    private final double zTolerance = 0;
+    private final double X_TOLERANCE = 0;
+    private final double Y_TOLERANCE = 0;
+    private final double Z_TOLERANCE = 0;
 
     // Encoder constants
-    private final double TICK_PER_REV = 0;
+    private final double TICKS_PER_REV = 0;
     private final double SPOOL_DIAMETER = 0;
 
     private final double [] INTEGRAL_BOUNDS_X = {-0, +0};
@@ -51,6 +51,10 @@ public class MecanumDriveNew {
     private final double [] INTEGRAL_BOUNDS_Z = {-0, +0};
 
     private static final String SUBSYSTEM_NAME = "Drive";
+
+    private int gear = 0;
+
+    private double [] gears = {0, 0.1 , 0.5 , 1};
 
     // Constructor
     public MecanumDriveNew(LinearOpMode opMode, boolean isDebug) {
@@ -64,9 +68,9 @@ public class MecanumDriveNew {
         backRight = opMode.hardwareMap.get(DcMotor.class, "backRight");
 
         // Init encoders
-        par1 = new DriveEncoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICK_PER_REV, SPOOL_DIAMETER);
-        par2 = new DriveEncoder(frontRight, DcMotorSimple.Direction.FORWARD, TICK_PER_REV, SPOOL_DIAMETER);
-        perp = new DriveEncoder(backRight, DcMotorSimple.Direction.FORWARD, TICK_PER_REV, SPOOL_DIAMETER);
+        par1 = new DriveEncoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
+        par2 = new DriveEncoder(frontRight, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
+        perp = new DriveEncoder(backRight, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
 
         // Init IMU
         imu = opMode.hardwareMap.get(IMU.class, "imu");
@@ -78,14 +82,20 @@ public class MecanumDriveNew {
 
     // Initialize robot components
     public void init() {
+
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        backRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        xPid.setTolerance(xTolerance);
-        yPid.setTolerance(yTolerance);
-        zPid.setTolerance(zTolerance);
+        xPid.setTolerance(X_TOLERANCE);
+        yPid.setTolerance(Y_TOLERANCE);
+        zPid.setTolerance(Z_TOLERANCE);
 
         xPid.setIntegrationBounds(INTEGRAL_BOUNDS_X[0], INTEGRAL_BOUNDS_X[1]);
         yPid.setIntegrationBounds(INTEGRAL_BOUNDS_Y[0], INTEGRAL_BOUNDS_Y[1]);
@@ -174,12 +184,13 @@ public class MecanumDriveNew {
         });
     }
 
-    public void setPower(Vector2d vec, double z) {
-        setPower(new Pose2d(vec, z));
-    }
 
-    public void setPower(double x, double y, double z) {
-        setPower(new Pose2d(x, y, z));
+
+    public void setPowerByGear(Pose2d power) {
+        power.setX(getX() * gears[gear]);
+        power.setY(getY() * gears[gear]);
+        power.setAngle(getAngle() * gears[gear]);
+        setPower(power);
     }
 
     // Stop all motors
@@ -190,22 +201,25 @@ public class MecanumDriveNew {
 
     // Field-centric drive
     public void fieldDrive(Pose2d power) {
-        power.rotateByDegrees(getAngle());
+        power.setX(Math.pow(MathUtil.applyDeadzone(power.getX(), 0.1), 2));
+        power.setY(Math.pow(MathUtil.applyDeadzone(power.getY(), 0.1), 2));
+        power.setAngle(Math.pow(MathUtil.applyDeadzone(power.getAngle(), 0.1), 2));
+
+
+        power.rotateByDegrees(-getAngle());
         setPower(power);
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
     }
 
-    public void fieldDrive(Vector2d vec, double z) {
-        fieldDrive(new Pose2d(vec, z));
-    }
-
-    public void fieldDrive(double x, double y, double z) {
-        fieldDrive(new Pose2d(x, y, z));
+    public void fieldGearDrive(Pose2d power) {
+        power.rotateByDegrees(-getAngle());
+        setPowerByGear(power);
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
     }
 
     // Move to position with PID
     public void pidDrive(Pose2d pose, double timeOut) {
-        pose.unrotateByDegrees(getAngle() - pose.getAngle());
+        pose.rotateByDegrees(getAngle() - pose.getAngle());
 
         xPid.setTimeout(timeOut);
         yPid.setTimeout(timeOut);
@@ -222,7 +236,7 @@ public class MecanumDriveNew {
 
             double xPower = xPid.calculate(unRotatedPos.getX(), pose.getX());
             double yPower = yPid.calculate(unRotatedPos.getY(), pose.getY());
-            double zPower = zPid.calculate(rotatedPos.getAngle(), pose.getAngle());
+            double zPower = zPid.calculate(unRotatedPos.getAngle(), pose.getAngle());
 
             setPower(new Pose2d(yPower, xPower, zPower));
 
@@ -243,23 +257,24 @@ public class MecanumDriveNew {
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "PID Drive Complete");
     }
 
-    public void pidDrive(Vector2d vec, double z, double timeOut) {
-        pidDrive(new Pose2d(vec, z), timeOut);
+    public Pose2d getPose() {
+        return rotatedPos.copy();
     }
 
-    public void pidDrive(double x, double y, double z, double timeOut) {
-        pidDrive(new Pose2d(x, y, z), timeOut);
+    public Pose2d getUnRotatedPose() {
+        return unRotatedPos.copy();
     }
 
-    public void pidDrive(Pose2d pose) {
-        pidDrive(pose, 5);
+    public int getGear() {
+        return gear;
     }
 
-    public void pidDrive(Vector2d vec, double z) {
-        pidDrive(new Pose2d(vec, z), 5);
+    public void setGear(int gear) {
+        gear = (int) MathUtil.clamp(gear, 0, gears.length-1);
+        this.gear = gear;
     }
 
-    public void pidDrive(double x, double y, double z) {
-        pidDrive(new Pose2d(x, y, z), 5);
+    public void setStartPos(Pose2d startPos) {
+        this.startPos = startPos;
     }
 }

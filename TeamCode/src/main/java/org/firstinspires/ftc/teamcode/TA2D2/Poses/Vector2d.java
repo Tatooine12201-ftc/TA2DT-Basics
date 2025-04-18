@@ -37,26 +37,9 @@ public class Vector2d {
      */
     public Vector2d rotateBy(double angle) {
         // Precompute sine and cosine to avoid multiple calls to Math functions
-        double cos = Math.cos(-angle);
-        double sin = Math.sin(-angle);
-        // Efficiently calculate rotated coordinates
-        double newX = this.x * cos - this.y * sin;
-        double newY = this.x * sin + this.y * cos;
-        return new Vector2d(newX, newY);
-    }
-
-    /**
-     * Un-rotates the vector by a specified angle.
-     * This method does not modify the current vector but returns a new one.
-     *
-     * @param angle the angle in radians by which to un-rotate the vector
-     * @return a new Vector2d instance representing the un-rotated vector
-     */
-    public Vector2d unRotateBy(double angle) {
-        // Precompute sine and cosine to avoid multiple calls to Math functions
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
-        // Efficiently calculate un-rotated coordinates
+        // Efficiently calculate rotated coordinates
         double newX = this.x * cos - this.y * sin;
         double newY = this.x * sin + this.y * cos;
         return new Vector2d(newX, newY);
@@ -73,16 +56,7 @@ public class Vector2d {
         return rotateBy(Math.toRadians(degrees));
     }
 
-    /**
-     * Un-rotates the vector by a specified angle in degrees.
-     * Converts degrees to radians and calls the unRotateBy method.
-     *
-     * @param degrees the angle in degrees by which to un-rotate the vector
-     * @return a new Vector2d instance representing the un-rotated vector
-     */
-    public Vector2d unRotateByDegrees(double degrees) {
-        return unRotateBy(Math.toRadians(degrees));
-    }
+
 
     /**
      * Returns the magnitude (length) of the vector.

@@ -106,8 +106,6 @@ public class Pose2d {
         // Rotate the position (Vector2d) by the specified angle
         position = position.rotateBy(rotationAngle);
 
-        angle += Math.toDegrees(rotationAngle);
-
     }
 
     /**
@@ -115,13 +113,6 @@ public class Pose2d {
      *
      * @param unrotationAngle The angle in radians to unrotate the pose by.
      */
-    public void unrotate(double unrotationAngle) {
-        // Unrotate the position (Vector2d) by the inverse of the specified angle
-        position = position.unRotateBy(unrotationAngle);
-
-        angle -= Math.toDegrees(unrotationAngle);
-
-    }
 
     /**
      * Rotates the pose by the specified angle in degrees.
@@ -132,8 +123,6 @@ public class Pose2d {
     public void rotateByDegrees(double rotationDegrees) {
         // Rotate the position using Vector2d's rotateByDegrees method
         position = position.rotateByDegrees(rotationDegrees);
-
-        angle += rotationDegrees;
     }
 
     /**
@@ -142,12 +131,7 @@ public class Pose2d {
      *
      * @param unrotationDegrees The angle in degrees to unrotate the pose by.
      */
-    public void unrotateByDegrees(double unrotationDegrees) {
-        // Unrotate the position using Vector2d's unRotateByDegrees method
-        position = position.unRotateByDegrees(unrotationDegrees);
 
-        angle -= unrotationDegrees;
-    }
 
     /**
      * Converts the Pose2d to a string representation.
