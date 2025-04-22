@@ -104,7 +104,7 @@ public class Pose2d {
      */
     public void rotate(double rotationAngle) {
         // Rotate the position (Vector2d) by the specified angle
-        position = position.rotateBy(rotationAngle);
+        position.rotateBy(rotationAngle);
 
     }
 
@@ -122,7 +122,7 @@ public class Pose2d {
      */
     public void rotateByDegrees(double rotationDegrees) {
         // Rotate the position using Vector2d's rotateByDegrees method
-        position = position.rotateByDegrees(rotationDegrees);
+        position.rotateByDegrees(rotationDegrees);  // Vector2d.r
     }
 
     /**

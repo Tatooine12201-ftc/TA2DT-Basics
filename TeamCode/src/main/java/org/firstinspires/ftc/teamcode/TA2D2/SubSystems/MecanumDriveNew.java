@@ -13,48 +13,41 @@ import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 
 public class MecanumDriveNew {
 
-    // Motors
-    DcMotor frontLeft, frontRight, backLeft, backRight;
+    // --- Constants ---
+    private static final String SUBSYSTEM_NAME = "Drive";
+    private final double X_TOLERANCE = 0;
+    private final double Y_TOLERANCE = 0;
+    private final double Z_TOLERANCE = 0;
+    private final double TICKS_PER_REV = 0;
+    private final double SPOOL_DIAMETER = 0;
+    private final double[] INTEGRAL_BOUNDS_X = {-0, +0};
+    private final double[] INTEGRAL_BOUNDS_Y = {-0, +0};
+    private final double[] INTEGRAL_BOUNDS_Z = {-0, +0};
+    private final double[] gears = {0, 0.1, 0.5, 1};
 
-    // Encoders
-    DriveEncoder par1, par2, perp;
-
-    // IMU
+    // --- Hardware ---
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private DriveEncoder par1, par2, perp;
     private IMU imu;
 
-    // OpMode and debug
+    // --- OpMode & Config ---
     private LinearOpMode opMode;
     private final boolean IS_DEBUG_MODE;
 
-    // PID Controllers
+    // --- PID Controllers ---
     private PIDFController xPid = new PIDFController(0, 0, 0, 0);
     private PIDFController yPid = new PIDFController(0, 0, 0, 0);
     private PIDFController zPid = new PIDFController(0, 0, 0, 0);
 
-    // Position tracking
-    private Pose2d rotatedPos = new Pose2d(0, 0, 0);
-    private Pose2d unRotatedPos = new Pose2d(0, 0, 0);
-    private Pose2d prevUnRotatedPos = new Pose2d(0, 0, 0);
+    // --- Position tracking ---
+    private Pose2d fieldPos = new Pose2d(0, 0, 0);
+    private Pose2d robotPos = new Pose2d(0, 0, 0);
+    private Pose2d deltaFieldPos = new Pose2d(0, 0, 0);
+    private Pose2d prevRawPos = new Pose2d(0, 0, 0);
     private Pose2d startPos = new Pose2d(0, 0, 0);
 
-    // Tolerances
-    private final double X_TOLERANCE = 0;
-    private final double Y_TOLERANCE = 0;
-    private final double Z_TOLERANCE = 0;
-
-    // Encoder constants
-    private final double TICKS_PER_REV = 0;
-    private final double SPOOL_DIAMETER = 0;
-
-    private final double [] INTEGRAL_BOUNDS_X = {-0, +0};
-    private final double [] INTEGRAL_BOUNDS_Y = {-0, +0};
-    private final double [] INTEGRAL_BOUNDS_Z = {-0, +0};
-
-    private static final String SUBSYSTEM_NAME = "Drive";
-
+    // --- Gear setting ---
     private int gear = 0;
-
-    private double [] gears = {0, 0.1 , 0.5 , 1};
 
     // Constructor
     public MecanumDriveNew(LinearOpMode opMode, boolean isDebug) {
@@ -80,9 +73,8 @@ public class MecanumDriveNew {
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Drive Initialized");
     }
 
-    // Initialize robot components
+    // Initialize motors, PID, directions
     public void init() {
-
         frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
         backRight.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -104,39 +96,46 @@ public class MecanumDriveNew {
         resetEncoders();
     }
 
-    // Reset all encoders
+    // Reset encoders to zero
     public void resetEncoders() {
         par1.resetEncoder();
         par2.resetEncoder();
         perp.resetEncoder();
-
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Encoders Reset");
     }
 
-    // Update robot position
+    // Update robot's position with odometry and IMU
     public void update() {
-        unRotatedPos.setAngle(getAngle());
+        double x = getRawX();
+        double y = getRawY();
+        double angle = getAngle();
+        robotPos.setAngle(angle);
+        fieldPos.setAngle(angle);
 
-        double deltaX = getX() - prevUnRotatedPos.getX();
-        double deltaY = getY() - prevUnRotatedPos.getY();
-        double deltaAngle = getAngle() - prevUnRotatedPos.getAngle();
+        deltaFieldPos.setX(getRawX() - prevRawPos.getX());
+        deltaFieldPos.setY(getRawY() - prevRawPos.getY());
+        deltaFieldPos.setAngle(angle - prevRawPos.getAngle());
+        deltaFieldPos.rotateByDegrees(-angle);
 
-        unRotatedPos.setX(unRotatedPos.getX() + deltaX);
-        unRotatedPos.setY(unRotatedPos.getY() + deltaY);
-        unRotatedPos.setAngle(unRotatedPos.getAngle() + deltaAngle);
+        fieldPos.setX(fieldPos.getX() + deltaFieldPos.getX());
+        fieldPos.setY(fieldPos.getX() + deltaFieldPos.getY());
 
-        rotatedPos = unRotatedPos.copy();
-        rotatedPos.rotateByDegrees(deltaAngle);
-
-        prevUnRotatedPos = unRotatedPos.copy();
+        robotPos = fieldPos.copy();
+        robotPos.rotateByDegrees(angle);
+        
+        prevRawPos.setX(x);
+        prevRawPos.setY(y);
+        prevRawPos.setAngle(angle);
+        
+        
 
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
-                {"deltaX", deltaX},
-                {"deltaY", deltaY},
-                {"deltaAngle", deltaAngle},
-                {"posX", rotatedPos.getX()},
-                {"posY", rotatedPos.getY()},
-                {"angle", rotatedPos.getAngle()}
+                {"deltaX", deltaFieldPos.getX()},
+                {"deltaY", deltaFieldPos.getY()},
+                {"deltaAngle", deltaFieldPos.getAngle()},
+                {"posX", fieldPos.getX()},
+                {"posY", fieldPos.getY()},
+                {"angle", fieldPos.getAngle()}
         });
     }
 
@@ -145,17 +144,17 @@ public class MecanumDriveNew {
         return MathUtil.normalizeAngleTo180(imu.getRobotYawPitchRollAngles().getYaw());
     }
 
-    // Get X from perpendicular encoder
-    public double getX() {
+    // Get X from perp encoder
+    public double getRawX() {
         return perp.getPosition();
     }
 
-    // Get Y from parallel encoders
-    public double getY() {
+    // Get Y from avg of parallel encoders
+    public double getRawY() {
         return (par1.getPosition() + par2.getPosition()) / 2;
     }
 
-    // Apply motor power
+    // Set motor powers from Pose2d input
     public void setPower(Pose2d power) {
         double x = power.getX();
         double y = power.getY();
@@ -184,40 +183,39 @@ public class MecanumDriveNew {
         });
     }
 
-
-
+    // Drive with gears scaling the input power
     public void setPowerByGear(Pose2d power) {
-        power.setX(getX() * gears[gear]);
-        power.setY(getY() * gears[gear]);
+        power.setX(getRawX() * gears[gear]);
+        power.setY(getRawY() * gears[gear]);
         power.setAngle(getAngle() * gears[gear]);
         setPower(power);
     }
 
-    // Stop all motors
+    // Stop all movement
     public void stop() {
         setPower(new Pose2d(0, 0, 0));
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Motors Stopped");
     }
 
-    // Field-centric drive
+    // Field-oriented drive
     public void fieldDrive(Pose2d power) {
         power.setX(Math.pow(MathUtil.applyDeadzone(power.getX(), 0.1), 2));
         power.setY(Math.pow(MathUtil.applyDeadzone(power.getY(), 0.1), 2));
         power.setAngle(Math.pow(MathUtil.applyDeadzone(power.getAngle(), 0.1), 2));
-
 
         power.rotateByDegrees(-getAngle());
         setPower(power);
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
     }
 
+    // Field-oriented drive with gears
     public void fieldGearDrive(Pose2d power) {
         power.rotateByDegrees(-getAngle());
         setPowerByGear(power);
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
     }
 
-    // Move to position with PID
+    // Drive to pose using PID controllers
     public void pidDrive(Pose2d pose, double timeOut) {
         pose.rotateByDegrees(getAngle() - pose.getAngle());
 
@@ -234,9 +232,9 @@ public class MecanumDriveNew {
         do {
             update();
 
-            double xPower = xPid.calculate(unRotatedPos.getX(), pose.getX());
-            double yPower = yPid.calculate(unRotatedPos.getY(), pose.getY());
-            double zPower = zPid.calculate(unRotatedPos.getAngle(), pose.getAngle());
+            double xPower = xPid.calculate(robotPos.getX(), pose.getX());
+            double yPower = yPid.calculate(robotPos.getY(), pose.getY());
+            double zPower = zPid.calculate(robotPos.getAngle(), pose.getAngle());
 
             setPower(new Pose2d(yPower, xPower, zPower));
 
@@ -257,20 +255,13 @@ public class MecanumDriveNew {
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "PID Drive Complete");
     }
 
-    public Pose2d getPose() {
-        return rotatedPos.copy();
-    }
-
-    public Pose2d getUnRotatedPose() {
-        return unRotatedPos.copy();
-    }
-
+    // Getters and setters
     public int getGear() {
         return gear;
     }
 
     public void setGear(int gear) {
-        gear = (int) MathUtil.clamp(gear, 0, gears.length-1);
+        gear = (int) MathUtil.clamp(gear, 0, gears.length - 1);
         this.gear = gear;
     }
 
