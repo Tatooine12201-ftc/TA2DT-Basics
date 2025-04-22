@@ -14,7 +14,7 @@ public class UnitConverter {
      * @param to The unit to convert to.
      * @return The converted value.
      */
-    public static double convert(double value, unit from, unit to) {
+    public static double convert(double value, Unit from, Unit to) {
         // If the 'from' and 'to' units are the same, no conversion is needed
         if (from == to) {
             return value;

@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
-import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
+import org.firstinspires.ftc.teamcode.TA2D2.PID.PIDController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 @Disabled
@@ -39,9 +39,9 @@ public class MecanumDrive {
     private double prevY = 0;
 
     // PID controllers for each axis
-    private PIDFController xPid = new PIDFController(0, 0, 0, 0);
-    private PIDFController yPid = new PIDFController(0, 0, 0, 0);
-    private PIDFController zPid = new PIDFController(0, 0, 0, 0);
+    private PIDController xPid = new PIDController(0, 0, 0, 0);
+    private PIDController yPid = new PIDController(0, 0, 0, 0);
+    private PIDController zPid = new PIDController(0, 0, 0, 0);
 
     // Tolerances for PID control
     private final double xTolerance = 0;

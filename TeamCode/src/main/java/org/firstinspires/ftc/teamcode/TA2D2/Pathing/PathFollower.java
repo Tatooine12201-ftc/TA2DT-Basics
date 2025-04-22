@@ -9,6 +9,7 @@ import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
 /**
  * A class to follow paths using splines, with support for strafing, slant (diagonal) movement, and motion profiling.
  */
+@Deprecated
 @Disabled
 public class PathFollower {
     private final MecanumDrive drive;

@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 
 import org.firstinspires.ftc.teamcode.TA2D2.Encoders.DriveEncoder;
-import org.firstinspires.ftc.teamcode.TA2D2.PIDFController;
+import org.firstinspires.ftc.teamcode.TA2D2.PID.PIDController;
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
 import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
 import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
@@ -35,9 +35,9 @@ public class MecanumDriveNew {
     private final boolean IS_DEBUG_MODE;
 
     // --- PID Controllers ---
-    private PIDFController xPid = new PIDFController(0, 0, 0, 0);
-    private PIDFController yPid = new PIDFController(0, 0, 0, 0);
-    private PIDFController zPid = new PIDFController(0, 0, 0, 0);
+    private PIDController xPid = new PIDController(0, 0, 0, 0);
+    private PIDController yPid = new PIDController(0, 0, 0, 0);
+    private PIDController zPid = new PIDController(0, 0, 0, 0);
 
     // --- Position tracking ---
     private Pose2d fieldPos = new Pose2d(0, 0, 0);

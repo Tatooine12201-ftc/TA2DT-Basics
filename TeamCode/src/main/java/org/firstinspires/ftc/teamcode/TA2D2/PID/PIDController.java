@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.TA2D2;
+package org.firstinspires.ftc.teamcode.TA2D2.PID;
 
 /**
  * This is a PID controller (https://en.wikipedia.org/wiki/PID_controller)
@@ -12,9 +12,9 @@ package org.firstinspires.ftc.teamcode.TA2D2;
  * measured value. If we consider e(t) the positional error, then
  * int(0,t)[e(t')dt'] is the total error and e'(t) is the velocity error.
  */
-public class PIDFController {
+public class PIDController {
 
-    private double kP, kI, kD, kF;
+    private double kP, kI, kD;
     private double setPoint;
     private double measuredValue;
     private double minIntegral, maxIntegral;
@@ -40,8 +40,8 @@ public class PIDFController {
     /**
      * The base constructor for the PIDF controller
      */
-    public PIDFController(double kp, double ki, double kd, double kf) {
-        this(kp, ki, kd, kf, 0, 0);
+    public PIDController(double kp, double ki, double kd, double kf) {
+        this(kp, ki, kd, 0, 0);
     }
 
     /**
@@ -53,11 +53,10 @@ public class PIDFController {
      * @param pv The measured value of he pid control loop. We want sp = pv, or to the degree
      *           such that sp - pv, or e(t) < tolerance.
      */
-    public PIDFController(double kp, double ki, double kd, double kf, double sp, double pv) {
+    public PIDController(double kp, double ki, double kd, double sp, double pv) {
         kP = kp;
         kI = ki;
         kD = kd;
-        kF = kf;
 
         setPoint = sp;
         measuredValue = pv;
@@ -127,7 +126,7 @@ public class PIDFController {
      * @return the PIDF coefficients
      */
     public double[] getCoefficients() {
-        return new double[]{kP, kI, kD, kF};
+        return new double[]{kP, kI, kD};
     }
 
     /**
@@ -224,14 +223,13 @@ public class PIDFController {
         totalError = totalError < minIntegral ? minIntegral : Math.min(maxIntegral, totalError);
 
         // returns u(t)
-        return kP * errorVal_p + kI * totalError + kD * errorVal_v + kF;
+        return kP * errorVal_p + kI * totalError + kD * errorVal_v;
     }
 
-    public void setPIDF(double kp, double ki, double kd, double kf) {
+    public void setPID(double kp, double ki, double kd) {
         kP = kp;
         kI = ki;
         kD = kd;
-        kF = kf;
     }
 
     public void setIntegrationBounds(double integralMin, double integralMax) {
@@ -267,14 +265,6 @@ public class PIDFController {
         kD = kd;
     }
 
-    public double getF() {
-        return kF;
-    }
-
-    public void setF(double kf) {
-        kF = kf;
-    }
-
     public double getPeriod() {
         return period;
     }
@@ -290,4 +280,14 @@ public class PIDFController {
     public double getRunTime() {
         return runTime;
     }
+
+    public double getMeasuredValue() {
+        return measuredValue;
+    }
+
+    public void setMeasuredValue(double measuredValue) {
+        this.measuredValue = measuredValue;
+    }
+
+
 }
