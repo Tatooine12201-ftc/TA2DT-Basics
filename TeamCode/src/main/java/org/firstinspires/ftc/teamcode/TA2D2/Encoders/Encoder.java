@@ -11,6 +11,8 @@ public class Encoder {
 
     public double SPOOL_DIA = 0;
 
+    public DcMotorSimple.Direction direction;
+
     public DcMotor encoder;
 
     public Encoder(DcMotor encoder) {
@@ -34,12 +36,17 @@ public class Encoder {
         this.SPOOL_DIA = SPOOL_DIA;
     }
 
-    public void setDirection(DcMotorSimple.Direction direction) {
-        encoder.setDirection(direction);
+    public void setDirection(DcMotorSimple.Direction direction){
+        this.direction = direction
     }
 
     public double getPosition() {
-        return encoder.getCurrentPosition();
+        if (direction = DcMotorSimple.Direction.Forward){
+            return encoder.getCurrentPosition();
+        }
+        else {
+            return -encoder.getCurrentPosition();
+        }
     }
 
     public double getAngle() {
