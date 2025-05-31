@@ -37,11 +37,11 @@ public class Encoder {
     }
 
     public void setDirection(DcMotorSimple.Direction direction){
-        this.direction = direction
+        this.direction = direction;
     }
 
     public double getPosition() {
-        if (direction = DcMotorSimple.Direction.Forward){
+        if (direction == DcMotorSimple.Direction.FORWARD){
             return encoder.getCurrentPosition();
         }
         else {

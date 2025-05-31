@@ -61,9 +61,9 @@ public class MecanumDriveNew {
         backRight = opMode.hardwareMap.get(DcMotor.class, "backRight");
 
         // Init encoders
-        par1 = new DriveEncoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
-        par2 = new DriveEncoder(frontRight, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
-        perp = new DriveEncoder(backRight, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
+        par1 = new DriveEncoder(backLeft, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);//right
+        par2 = new DriveEncoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);//left
+        perp = new DriveEncoder(backRight, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);
 
         // Init IMU
         imu = opMode.hardwareMap.get(IMU.class, "imu");
@@ -118,7 +118,7 @@ public class MecanumDriveNew {
         deltaFieldPos.rotateByDegrees(-angle);
 
         fieldPos.setX(fieldPos.getX() + deltaFieldPos.getX());
-        fieldPos.setY(fieldPos.getX() + deltaFieldPos.getY());
+        fieldPos.setY(fieldPos.getY() + deltaFieldPos.getY());
 
         robotPos = fieldPos.copy();
         robotPos.rotateByDegrees(angle);
@@ -172,6 +172,7 @@ public class MecanumDriveNew {
         frontRight.setPower(rightFrontPower);
         backRight.setPower(rightBackPower);
 
+        update();
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
                 {"inputX", x},
                 {"inputY", y},
