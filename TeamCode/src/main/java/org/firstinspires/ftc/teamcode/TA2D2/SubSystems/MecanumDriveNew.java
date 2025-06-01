@@ -18,8 +18,12 @@ public class MecanumDriveNew {
     private final double X_TOLERANCE = 0;
     private final double Y_TOLERANCE = 0;
     private final double Z_TOLERANCE = 0;
-    private final double TICKS_PER_REV = 0;
-    private final double SPOOL_DIAMETER = 0;
+    private final double TICKS_PER_REV = 8192;
+    private final double SPOOL_DIAMETER = 3.5;
+
+    private final double LATERAL_DISTANCE = 21;
+
+    private final double FORWARD_OFFSET = -15;
     private final double[] INTEGRAL_BOUNDS_X = {-0, +0};
     private final double[] INTEGRAL_BOUNDS_Y = {-0, +0};
     private final double[] INTEGRAL_BOUNDS_Z = {-0, +0};
@@ -61,9 +65,9 @@ public class MecanumDriveNew {
         backRight = opMode.hardwareMap.get(DcMotor.class, "backRight");
 
         // Init encoders
-        par1 = new DriveEncoder(backLeft, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);//right
+        par1 = new DriveEncoder(backRight, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);//right
         par2 = new DriveEncoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);//left
-        perp = new DriveEncoder(backRight, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);
+        perp = new DriveEncoder(backLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
 
         // Init IMU
         imu = opMode.hardwareMap.get(IMU.class, "imu");
@@ -84,6 +88,8 @@ public class MecanumDriveNew {
         frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        imu.resetYaw();
 
         xPid.setTolerance(X_TOLERANCE);
         yPid.setTolerance(Y_TOLERANCE);
@@ -115,6 +121,10 @@ public class MecanumDriveNew {
         deltaFieldPos.setX(getRawX() - prevRawPos.getX());
         deltaFieldPos.setY(getRawY() - prevRawPos.getY());
         deltaFieldPos.setAngle(angle - prevRawPos.getAngle());
+
+        double phi = (getRawY1() - getRawY2())/LATERAL_DISTANCE;
+        deltaFieldPos.setX(deltaFieldPos.getX() - FORWARD_OFFSET * phi);
+
         deltaFieldPos.rotateByDegrees(-angle);
 
         fieldPos.setX(fieldPos.getX() + deltaFieldPos.getX());
@@ -130,6 +140,8 @@ public class MecanumDriveNew {
         
 
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
+                {"deltaRawPosX", getRawX()- prevRawPos.getX()},
+                {"deltaRawPosY", getRawY()- prevRawPos.getY()},
                 {"deltaX", deltaFieldPos.getX()},
                 {"deltaY", deltaFieldPos.getY()},
                 {"deltaAngle", deltaFieldPos.getAngle()},
@@ -141,20 +153,44 @@ public class MecanumDriveNew {
 
     // Get heading from IMU
     public double getAngle() {
-        return MathUtil.normalizeAngleTo180(imu.getRobotYawPitchRollAngles().getYaw());
+        return -MathUtil.normalizeAngleTo180(imu.getRobotYawPitchRollAngles().getYaw());
     }
 
     // Get X from perp encoder
     public double getRawX() {
-        return perp.getPosition();
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "perp ticks", perp.getPosition());
+        return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, perp.getPosition());
+    }
+
+    public double getRawY1() {
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par1 ticks", par1.getPosition());
+        return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par1.getPosition());
+    }
+    public double getRawY2() {
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par2 ticks", par2.getPosition());
+        return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par2.getPosition());
     }
 
     // Get Y from avg of parallel encoders
     public double getRawY() {
-        return (par1.getPosition() + par2.getPosition()) / 2;
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par2 ticks", (getRawY1() + getRawY2()) / 2);
+        return (getRawY1() + getRawY2()) / 2;
     }
 
     // Set motor powers from Pose2d input
+
+    public void setPowerFrontRight(double power){
+        frontRight.setPower(power);
+    }
+    public void setPowerFrontLeft(double power){
+        frontLeft.setPower(power);
+    }
+    public void setPowerBackRight(double power){
+        backRight.setPower(power);
+    }
+    public void setPowerBackLeft(double power){
+        backLeft.setPower(power);
+    }
     public void setPower(Pose2d power) {
         double x = power.getX();
         double y = power.getY();
@@ -167,12 +203,13 @@ public class MecanumDriveNew {
         double leftFrontPower = (y + x + z) / denominator;
         double leftBackPower = (y - x + z) / denominator;
 
-        frontLeft.setPower(leftFrontPower);
-        backLeft.setPower(leftBackPower);
         frontRight.setPower(rightFrontPower);
+        frontLeft.setPower(leftFrontPower);
         backRight.setPower(rightBackPower);
+        backLeft.setPower(leftBackPower);
 
         update();
+
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
                 {"inputX", x},
                 {"inputY", y},
@@ -200,9 +237,9 @@ public class MecanumDriveNew {
 
     // Field-oriented drive
     public void fieldDrive(Pose2d power) {
-        power.setX(Math.pow(MathUtil.applyDeadzone(power.getX(), 0.1), 2));
-        power.setY(Math.pow(MathUtil.applyDeadzone(power.getY(), 0.1), 2));
-        power.setAngle(Math.pow(MathUtil.applyDeadzone(power.getAngle(), 0.1), 2));
+        power.setX(MathUtil.applyDeadzone(power.getX(), 0.1));
+        power.setY(MathUtil.applyDeadzone(power.getY(), 0.1));
+        power.setAngle(MathUtil.applyDeadzone(power.getAngle(), 0.1));
 
         power.rotateByDegrees(-getAngle());
         setPower(power);

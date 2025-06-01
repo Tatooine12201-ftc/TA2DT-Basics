@@ -35,14 +35,15 @@ public class Vector2d {
      * @param angle the angle in radians by which to rotate the vector
      * @return a new Vector2d instance representing the rotated vector
      */
-    public Vector2d rotateBy(double angle) {
+    public void rotateBy(double angle) {
         // Precompute sine and cosine to avoid multiple calls to Math functions
-        double cos = Math.cos(angle);
-        double sin = Math.sin(angle);
+        double cos = Math.cos(-angle);
+        double sin = Math.sin(-angle);
         // Efficiently calculate rotated coordinates
         double newX = this.x * cos - this.y * sin;
         double newY = this.x * sin + this.y * cos;
-        return new Vector2d(newX, newY);
+        this.x = newX;
+        this.y = newY;
     }
 
     /**
@@ -52,8 +53,8 @@ public class Vector2d {
      * @param degrees the angle in degrees by which to rotate the vector
      * @return a new Vector2d instance representing the rotated vector
      */
-    public Vector2d rotateByDegrees(double degrees) {
-        return rotateBy(Math.toRadians(degrees));
+    public void rotateByDegrees(double degrees) {
+        rotateBy(Math.toRadians(degrees));
     }
 
 
