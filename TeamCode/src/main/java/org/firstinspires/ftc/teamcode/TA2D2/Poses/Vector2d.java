@@ -42,8 +42,8 @@ public class Vector2d {
         // Efficiently calculate rotated coordinates
         double newX = this.x * cos - this.y * sin;
         double newY = this.x * sin + this.y * cos;
-        setX(newX);
-        setY(newY);
+        this.x = newX;
+        this.y = newY;
     }
 
     /**
