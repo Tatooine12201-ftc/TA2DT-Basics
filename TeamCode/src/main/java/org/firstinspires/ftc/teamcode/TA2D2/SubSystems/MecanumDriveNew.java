@@ -123,6 +123,7 @@ public class MecanumDriveNew {
         deltaFieldPos.setAngle(angle - prevRawPos.getAngle());
 
         double phi = (getRawY1() - getRawY2())/LATERAL_DISTANCE;
+
         deltaFieldPos.setX(deltaFieldPos.getX() - FORWARD_OFFSET * phi);
 
         deltaFieldPos.rotateByDegrees(-angle);
