@@ -5,17 +5,17 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
-import org.firstinspires.ftc.teamcode.TA2D2.SubSystems.MecanumDriveNew;
+import org.firstinspires.ftc.teamcode.TA2D2.SubSystems.MecanumDrive;
 
 @TeleOp(name = "MecanumTeleOp", group = "Testing")
 
 public class MecanumTeleOp extends LinearOpMode {
 
-    MecanumDriveNew mecanum;
+    MecanumDrive mecanum;
 
     @Override
             public void runOpMode() {
-        mecanum = new MecanumDriveNew(this, true);
+        mecanum = new MecanumDrive(this, true);
 
         waitForStart();
         while (opModeIsActive()){

@@ -15,8 +15,14 @@ public class Encoder {
 
     public DcMotor encoder;
 
-    public Encoder(DcMotor encoder) {
-        this.encoder = encoder;
+    public Encoder(DcMotor encoder, DcMotorSimple.Direction direction, double TICK_PER_REV, double SPOOL_DIA) {
+        setDirection(direction);
+        setTICK_PER_REV(TICK_PER_REV);
+        setSPOOL_DIA(SPOOL_DIA);
+    }
+
+    public Encoder(DcMotor encoder ,DcMotorSimple.Direction direction ) {
+        this(encoder, DcMotorSimple.Direction.FORWARD, 0, 0);
     }
 
     public double getTICK_PER_REV() {
