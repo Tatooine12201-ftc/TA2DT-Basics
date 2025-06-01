@@ -34,9 +34,6 @@ public class Encoder {
         this.SPOOL_DIA = SPOOL_DIA;
     }
 
-    public void setDirection(DcMotorSimple.Direction direction) {
-        encoder.setDirection(direction);
-    }
 
     public double getPosition() {
         return encoder.getCurrentPosition();
