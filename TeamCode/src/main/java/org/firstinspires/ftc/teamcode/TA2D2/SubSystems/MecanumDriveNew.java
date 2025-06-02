@@ -28,7 +28,6 @@ public class MecanumDriveNew {
     private final double[] INTEGRAL_BOUNDS_X = {-0, +0};
     private final double[] INTEGRAL_BOUNDS_Y = {-0, +0};
     private final double[] INTEGRAL_BOUNDS_Z = {-0, +0};
-    private final double[] gears = {0, 0.1, 0.5, 1};
 
     // --- Hardware ---
     private DcMotor frontLeft, frontRight, backLeft, backRight;
@@ -53,7 +52,6 @@ public class MecanumDriveNew {
     private double prevPerp = 0.0;
 
     // --- Gear setting ---
-    private int gear = 0;
 
     // Constructor
     public MecanumDriveNew(LinearOpMode opMode, boolean isDebug) {
@@ -117,6 +115,7 @@ public class MecanumDriveNew {
         double perp = getPerp();
         double par0 = getPar0();
         double par1 = getPar1();
+
         double angle = getAngle();
 
 
@@ -223,13 +222,6 @@ public class MecanumDriveNew {
         });
     }
 
-    // Drive with gears scaling the input power
-    public void setPowerByGear(Pose2d power) {
-        power.setX(getPerp() * gears[gear]);
-        power.setY(getRawY() * gears[gear]);
-        power.setAngle(getAngle() * gears[gear]);
-        setPower(power);
-    }
 
     // Stop all movement
     public void stop() {
@@ -249,11 +241,7 @@ public class MecanumDriveNew {
     }
 
     // Field-oriented drive with gears
-    public void fieldGearDrive(Pose2d power) {
-        power.rotateByDegrees(-getAngle());
-        setPowerByGear(power);
-        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
-    }
+
 
     // Drive to pose using PID controllers
     public void pidDrive(Pose2d pose, double timeOut) {
@@ -296,17 +284,6 @@ public class MecanumDriveNew {
         DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "PID Drive Complete");
     }
 
-    // Getters and setters
-    public int getGear() {
-        return gear;
-    }
 
-    public void setGear(int gear) {
-        gear = (int) MathUtil.clamp(gear, 0, gears.length - 1);
-        this.gear = gear;
-    }
 
-    public void setStartPos(Pose2d startPos) {
-        this.startPos = startPos;
-    }
 }
