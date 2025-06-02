@@ -15,7 +15,7 @@ public class MecanumTeleOp extends LinearOpMode {
 
     @Override
             public void runOpMode() {
-        mecanum = new MecanumDrive(this, true);
+        mecanum = new MecanumDrive(this, false);
 
         waitForStart();
         while (opModeIsActive()){

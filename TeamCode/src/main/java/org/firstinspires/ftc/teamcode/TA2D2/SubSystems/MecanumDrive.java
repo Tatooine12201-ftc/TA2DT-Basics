@@ -21,8 +21,9 @@ public class MecanumDrive {
 
     private final double TICKS_PER_REV = 8192;
     private final double SPOOL_DIAMETER = 3.5;
-    private final double LATERAL_DISTANCE = 21;
-    private final double FORWARD_OFFSET = -15;
+
+    private final double LATERAL_DISTANCE = 20;
+    private final double FORWARD_OFFSET = -13.5;
 
     private final double[] INTEGRAL_BOUNDS_X = {-0, +0};
     private final double[] INTEGRAL_BOUNDS_Y = {-0, +0};
@@ -67,7 +68,7 @@ public class MecanumDrive {
         // Init encoders
         par0 = new Encoder(backRight, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);//right
         par1 = new Encoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);//left
-        perp = new Encoder(backLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);
+        perp = new Encoder(backLeft, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);
 
         // Init IMU
         imu = opMode.hardwareMap.get(IMU.class, "imu");
@@ -118,30 +119,33 @@ public class MecanumDrive {
         robotPos.setAngle(angle);
         fieldPos.setAngle(angle);
 
-        deltaFieldPos.setX(getRawX() - prevRawPos.getX());
-        deltaFieldPos.setY(getRawY() - prevRawPos.getY());
+        deltaFieldPos.setX(x - prevRawPos.getX());
+        deltaFieldPos.setY(y - prevRawPos.getY());
         deltaFieldPos.setAngle(angle - prevRawPos.getAngle());
 
-        double phi = (getRawY1() - getRawY0())/LATERAL_DISTANCE;
+//        double phi = Math.toRadians(deltaFieldPos.getAngle());
+//
+//        deltaFieldPos.setX(deltaFieldPos.getX() - (FORWARD_OFFSET * phi));
 
-        deltaFieldPos.setX(deltaFieldPos.getX() - FORWARD_OFFSET * phi);
-
-        deltaFieldPos.rotateByDegrees(-angle);
+        deltaFieldPos.rotateByDegrees(angle);
 
         fieldPos.setX(fieldPos.getX() + deltaFieldPos.getX());
         fieldPos.setY(fieldPos.getY() + deltaFieldPos.getY());
 
         robotPos = fieldPos.copy();
-        robotPos.rotateByDegrees(angle);
-        
+        robotPos.rotateByDegrees(-angle);
+
         prevRawPos.setX(x);
         prevRawPos.setY(y);
         prevRawPos.setAngle(angle);
         
         
-
+//        opMode.telemetry.addData("X", fieldPos.getX());
+//        opMode.telemetry.addData("Y", fieldPos.getY());
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
-                {"phi", phi},
+//                {"phi", phi},
+                {"rawY", y},
+                {"rawX", x},
                 {"deltaRawPosX", getRawX()- prevRawPos.getX()},
                 {"deltaRawPosY", getRawY()- prevRawPos.getY()},
                 {"deltaX", deltaFieldPos.getX()},
@@ -161,21 +165,24 @@ public class MecanumDrive {
     // Get X from perp encoder
     public double getRawX() {
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "perp ticks", perp.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "perp dis", MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, perp.getPosition()));
         return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, perp.getPosition());
     }
 
     public double getRawY0() {
-        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par1 ticks", par0.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par0 ticks", par0.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par0 dis",MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par0.getPosition()));
         return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par0.getPosition());
     }
     public double getRawY1() {
-        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par2 ticks", par1.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par1 ticks", par1.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par1 dis",MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par1.getPosition()));
         return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par1.getPosition());
     }
 
     // Get Y from avg of parallel encoders
     public double getRawY() {
-        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par2 ticks", (getRawY0() + getRawY1()) / 2);
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par ticks", (getRawY0() + getRawY1()) / 2);
         return (getRawY0() + getRawY1()) / 2;
     }
 
@@ -243,7 +250,7 @@ public class MecanumDrive {
         power.setY(MathUtil.applyDeadzone(power.getY(), 0.1));
         power.setAngle(MathUtil.applyDeadzone(power.getAngle(), 0.1));
 
-        power.rotateByDegrees(-getAngle());
+        power.rotateByDegrees(getAngle());
         setPower(power);
         DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
     }

@@ -16,6 +16,7 @@ public class Encoder {
     public DcMotor encoder;
 
     public Encoder(DcMotor encoder, DcMotorSimple.Direction direction, double TICK_PER_REV, double SPOOL_DIA) {
+        this.encoder = encoder;
         setDirection(direction);
         setTICK_PER_REV(TICK_PER_REV);
         setSPOOL_DIA(SPOOL_DIA);

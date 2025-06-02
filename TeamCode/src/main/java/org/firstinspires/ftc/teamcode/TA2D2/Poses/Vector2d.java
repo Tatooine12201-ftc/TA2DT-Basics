@@ -37,8 +37,8 @@ public class Vector2d {
      */
     public void rotateBy(double angle) {
         // Precompute sine and cosine to avoid multiple calls to Math functions
-        double cos = Math.cos(-angle);
-        double sin = Math.sin(-angle);
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
         // Efficiently calculate rotated coordinates
         double newX = this.x * cos - this.y * sin;
         double newY = this.x * sin + this.y * cos;
