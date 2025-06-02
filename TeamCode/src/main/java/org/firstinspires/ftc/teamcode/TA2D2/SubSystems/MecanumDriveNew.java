@@ -1,0 +1,312 @@
+package org.firstinspires.ftc.teamcode.TA2D2.SubSystems;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
+
+import org.firstinspires.ftc.teamcode.TA2D2.DebugUtils;
+import org.firstinspires.ftc.teamcode.TA2D2.Encoders.Encoder;
+import org.firstinspires.ftc.teamcode.TA2D2.MathUtils.MathUtil;
+import org.firstinspires.ftc.teamcode.TA2D2.PID.PIDController;
+import org.firstinspires.ftc.teamcode.TA2D2.Poses.Pose2d;
+
+public class MecanumDriveNew {
+
+    // --- Constants ---
+    private static final String SUBSYSTEM_NAME = "Drive";
+    private final double X_TOLERANCE = 0;
+    private final double Y_TOLERANCE = 0;
+    private final double Z_TOLERANCE = 0;
+
+    private final double TICKS_PER_REV = 8192;
+    private final double SPOOL_DIAMETER = 3.5;
+
+    private final double LATERAL_DISTANCE = 20;
+    private final double FORWARD_OFFSET = -13.5;
+
+    private final double[] INTEGRAL_BOUNDS_X = {-0, +0};
+    private final double[] INTEGRAL_BOUNDS_Y = {-0, +0};
+    private final double[] INTEGRAL_BOUNDS_Z = {-0, +0};
+    private final double[] gears = {0, 0.1, 0.5, 1};
+
+    // --- Hardware ---
+    private DcMotor frontLeft, frontRight, backLeft, backRight;
+    private Encoder par0, par1, perp;
+    private IMU imu;
+
+    // --- OpMode & Config ---
+    private LinearOpMode opMode;
+    private final boolean IS_DEBUG_MODE;
+
+    // --- PID Controllers ---
+    private PIDController xPid = new PIDController(0, 0, 0, 0);
+    private PIDController yPid = new PIDController(0, 0, 0, 0);
+    private PIDController zPid = new PIDController(0, 0, 0, 0);
+
+    // --- Position tracking ---
+    private Pose2d fieldPos = new Pose2d(0, 0, 0);
+    private Pose2d robotPos = new Pose2d(0, 0, 0);
+
+    private double prevPar0 = 0.0;
+    private double prevPar1 = 0.0;
+    private double prevPerp = 0.0;
+
+    // --- Gear setting ---
+    private int gear = 0;
+
+    // Constructor
+    public MecanumDriveNew(LinearOpMode opMode, boolean isDebug) {
+        this.opMode = opMode;
+        this.IS_DEBUG_MODE = isDebug;
+
+        // Init motors
+        frontLeft = opMode.hardwareMap.get(DcMotor.class, "frontLeft");
+        frontRight = opMode.hardwareMap.get(DcMotor.class, "frontRight");
+        backLeft = opMode.hardwareMap.get(DcMotor.class, "backLeft");
+        backRight = opMode.hardwareMap.get(DcMotor.class, "backRight");
+
+        // Init encoders
+        par0 = new Encoder(backRight, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);//right
+        par1 = new Encoder(frontLeft, DcMotorSimple.Direction.FORWARD, TICKS_PER_REV, SPOOL_DIAMETER);//left
+        perp = new Encoder(backLeft, DcMotorSimple.Direction.REVERSE, TICKS_PER_REV, SPOOL_DIAMETER);
+
+        // Init IMU
+        imu = opMode.hardwareMap.get(IMU.class, "imu");
+
+        init();
+
+        DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Drive Initialized");
+    }
+
+    // Initialize motors, PID, directions
+    public void init() {
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        backRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        backLeft.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        imu.resetYaw();
+
+        xPid.setTolerance(X_TOLERANCE);
+        yPid.setTolerance(Y_TOLERANCE);
+        zPid.setTolerance(Z_TOLERANCE);
+
+        xPid.setIntegrationBounds(INTEGRAL_BOUNDS_X[0], INTEGRAL_BOUNDS_X[1]);
+        yPid.setIntegrationBounds(INTEGRAL_BOUNDS_Y[0], INTEGRAL_BOUNDS_Y[1]);
+        zPid.setIntegrationBounds(INTEGRAL_BOUNDS_Z[0], INTEGRAL_BOUNDS_Z[1]);
+
+        resetEncoders();
+    }
+
+    // Reset encoders to zero
+    public void resetEncoders() {
+        par0.resetEncoder();
+        par1.resetEncoder();
+        perp.resetEncoder();
+        DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Encoders Reset");
+    }
+
+    // Update robot's position with odometry and IMU
+    public void update() {
+        double perp = getPerp();
+        double par0 = getPar0();
+        double par1 = getPar1();
+        double angle = getAngle();
+
+
+        double deltaPar0 = par0 - prevPar0;
+        double deltaPar1 = par1 - prevPar1;
+        double deltaPerp = perp - prevPerp;;
+
+
+
+
+        double phi = (par1 - par0)/LATERAL_DISTANCE;
+        double deltaPar = (deltaPar0 + deltaPar1)/2;
+        deltaPerp = deltaPerp - phi * FORWARD_OFFSET;
+
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+
+        double x = deltaPar * cos - deltaPerp * sin;
+        double y = deltaPar * sin + deltaPerp * cos;
+
+        fieldPos= new Pose2d(x, y, angle);
+        fieldPos.rotateByDegrees(angle);
+
+        robotPos = fieldPos.copy();
+        robotPos.rotateByDegrees(-angle);
+
+        prevPerp = perp;
+        prevPar0 = par0;
+        prevPar1 = par1;
+
+//        opMode.telemetry.addData("X", fieldPos.getX());
+//        opMode.telemetry.addData("Y", fieldPos.getY());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
+//                {"phi", phi},
+        });
+    }
+
+    // Get heading from IMU
+    public double getAngle() {
+        return -MathUtil.normalizeAngleTo180(imu.getRobotYawPitchRollAngles().getYaw());
+    }
+
+    // Get X from perp encoder
+    public double getPerp() {
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "perp ticks", perp.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "perp dis", MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, perp.getPosition()));
+        return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, perp.getPosition());
+    }
+
+    public double getPar0() {
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par0 ticks", par0.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par0 dis",MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par0.getPosition()));
+        return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par0.getPosition());
+    }
+    public double getPar1() {
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par1 ticks", par1.getPosition());
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "par1 dis",MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par1.getPosition()));
+        return MathUtil.convertTicksToDistance(TICKS_PER_REV, SPOOL_DIAMETER, par1.getPosition());
+    }
+
+
+
+    // Set motor powers from Pose2d input
+
+    public void setPowerFrontRight(double power){
+        frontRight.setPower(power);
+    }
+    public void setPowerFrontLeft(double power){
+        frontLeft.setPower(power);
+    }
+    public void setPowerBackRight(double power){
+        backRight.setPower(power);
+    }
+    public void setPowerBackLeft(double power){
+        backLeft.setPower(power);
+    }
+    public void setPower(Pose2d power) {
+        double x = power.getX();
+        double y = power.getY();
+        double z = power.getAngle();
+
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(z), 1);
+
+        double rightFrontPower = (y - x - z) / denominator;
+        double rightBackPower = (y + x - z) / denominator;
+        double leftFrontPower = (y + x + z) / denominator;
+        double leftBackPower = (y - x + z) / denominator;
+
+        frontRight.setPower(rightFrontPower);
+        frontLeft.setPower(leftFrontPower);
+        backRight.setPower(rightBackPower);
+        backLeft.setPower(leftBackPower);
+
+        update();
+
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
+                {"inputX", x},
+                {"inputY", y},
+                {"inputZ", z},
+                {"FL", leftFrontPower},
+                {"FR", rightFrontPower},
+                {"BL", leftBackPower},
+                {"BR", rightBackPower}
+        });
+    }
+
+    // Drive with gears scaling the input power
+    public void setPowerByGear(Pose2d power) {
+        power.setX(getPerp() * gears[gear]);
+        power.setY(getRawY() * gears[gear]);
+        power.setAngle(getAngle() * gears[gear]);
+        setPower(power);
+    }
+
+    // Stop all movement
+    public void stop() {
+        setPower(new Pose2d(0, 0, 0));
+        DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Motors Stopped");
+    }
+
+    // Field-oriented drive
+    public void fieldDrive(Pose2d power) {
+        power.setX(MathUtil.applyDeadzone(power.getX(), 0.1));
+        power.setY(MathUtil.applyDeadzone(power.getY(), 0.1));
+        power.setAngle(MathUtil.applyDeadzone(power.getAngle(), 0.1));
+
+        power.rotateByDegrees(getAngle());
+        setPower(power);
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
+    }
+
+    // Field-oriented drive with gears
+    public void fieldGearDrive(Pose2d power) {
+        power.rotateByDegrees(-getAngle());
+        setPowerByGear(power);
+        DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Field Drive Power", power);
+    }
+
+    // Drive to pose using PID controllers
+    public void pidDrive(Pose2d pose, double timeOut) {
+        pose.rotateByDegrees(-pose.getAngle());
+        pose.rotateByDegrees(robotPos.getAngle());
+
+        xPid.setTimeout(timeOut);
+        yPid.setTimeout(timeOut);
+        zPid.setTimeout(timeOut);
+
+        xPid.reset();
+        yPid.reset();
+        zPid.reset();
+
+        DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "Starting PID Drive");
+
+        do {
+            update();
+
+            double xPower = xPid.calculate(robotPos.getX(), pose.getX());
+            double yPower = yPid.calculate(robotPos.getY(), pose.getY());
+            double zPower = zPid.calculate(robotPos.getAngle(), pose.getAngle());
+
+            setPower(new Pose2d(yPower, xPower, zPower));
+
+            DebugUtils.logDebug(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, new Object[][]{
+                    {"xPower", xPower},
+                    {"yPower", yPower},
+                    {"zPower", zPower},
+                    {"targetX", pose.getX()},
+                    {"targetY", pose.getY()},
+                    {"targetAngle", pose.getAngle()}
+            });
+
+            opMode.telemetry.update();
+
+        } while ((!xPid.atSetPoint() || !yPid.atSetPoint() || !zPid.atSetPoint()) && opMode.opModeIsActive());
+
+        stop();
+        DebugUtils.logDebugMessage(opMode.telemetry, IS_DEBUG_MODE, SUBSYSTEM_NAME, "PID Drive Complete");
+    }
+
+    // Getters and setters
+    public int getGear() {
+        return gear;
+    }
+
+    public void setGear(int gear) {
+        gear = (int) MathUtil.clamp(gear, 0, gears.length - 1);
+        this.gear = gear;
+    }
+
+    public void setStartPos(Pose2d startPos) {
+        this.startPos = startPos;
+    }
+}
